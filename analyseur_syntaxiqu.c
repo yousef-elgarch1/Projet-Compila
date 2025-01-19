@@ -26,7 +26,8 @@ typedef enum {
     INT_TOKEN, BOOL_TOKEN, REAL_TOKEN,
     CHAR_TOKEN, STRING_TOKEN, PROCEDURE_TOKEN , FUNCTION_TOKEN,
     PARAM_TOKEN,  // For parameter list
-    VAR_PARAM_TOKEN
+    VAR_PARAM_TOKEN,ERR_TOKEN
+
 } CODES_LEX;
 
 
@@ -81,6 +82,44 @@ Region current_reg = RPROG;
 
 //FIN SEMANTIQUE
 
+char* getTokenString(CODES_LEX token) {
+    static const char* tokenStrings[] = {
+    "ID_TOKEN", "PROGRAM_TOKEN", "CONST_TOKEN", "VAR_TOKEN",
+    "BEGIN_TOKEN", "END_TOKEN", "IF_TOKEN", "THEN_TOKEN",
+    "WHILE_TOKEN", "DO_TOKEN", "READ_TOKEN", "WRITE_TOKEN",
+    "PV_TOKEN", "PT_TOKEN", "PLUS_TOKEN", "MOINS_TOKEN",
+    "MULT_TOKEN", "DIV_TOKEN", "VIR_TOKEN", "AFF_TOKEN",
+    "INF_TOKEN", "INFEG_TOKEN", "SUP_TOKEN", "SUPEG_TOKEN",
+    "DIFF_TOKEN", "PO_TOKEN", "PF_TOKEN", "EOF_TOKEN",
+    "NUM_TOKEN", "ERREUR_TOKEN", "FIN_TOKEN", "EG_TOKEN",
+    "REPEAT_TOKEN", "UNTIL_TOKEN", "FOR_TOKEN", "ELSE_TOKEN",
+    "CASE_TOKEN", "OF_TOKEN", "INTO_TOKEN", "DOWNTO_TOKEN",
+    "DDOT_TOKEN",
+    "INT_TOKEN", "BOOL_TOKEN", "REAL_TOKEN",
+    "CHAR_TOKEN", "STRING_TOKEN", "PROCEDURE_TOKEN", "FUNCTION_TOKEN",
+    "PARAM_TOKEN",
+    "VAR_PARAM_TOKEN",
+    "ERR_TOKEN"
+};
+
+
+    if (token >= 0 && token <= ERR_TOKEN) {
+        return tokenStrings[token];
+    }
+    return "UNKNOWN_TOKEN";
+}
+
+const char* getTypeIDFString(TypeIDF type) {
+    static const char* typeStrings[] = {
+        "TPROG", "TVAR", "TCONST", "TPROC", "TFUNC"
+    };
+
+    if (type >= TPROG && type <= TFUNC) {
+        return typeStrings[type];
+    } else {
+        return "UNKNOWN_TYPE";
+    }
+}
 
 TSym_Cour SYM_COUR;
 
@@ -121,11 +160,11 @@ void FUNC_DECL();
 void PARAM_LIST();
 void LOCAL_DECL();
 void PROC_CALL();
+
 void PrintSymbolTable();
 void Check();
 
 
-    // Semantique
 void Check()
 {
     int r = 0;
@@ -146,21 +185,56 @@ void Check()
         {
             if (TPROG == TAB_IDFS[i].TIDF)
             {
+
                 printf("%s ----> Erreur:  Le ID du programme ne peut etre utilise dans le programme.\n", SYM_COUR.NOM);
+
                 exit(EXIT_FAILURE);
             }
             else
             {
+
                 printf("%s ----> Erreur: PAS DE DOUBLE DECLARATIONS.\n", SYM_COUR.NOM);
+
                 exit(EXIT_FAILURE);
             }
         }
         strcpy(TAB_IDFS[NBR_IDFS].NOM, SYM_COUR.NOM);
         TAB_IDFS[NBR_IDFS].TIDF = TPROG;
         NBR_IDFS++;
+
+        break;
+    case RCONST:
+        for (i = 0; i < NBR_IDFS; ++i)
+        {
+            if (strcmp(SYM_COUR.NOM, TAB_IDFS[i].NOM) == 0)
+            {
+                r = 1;
+                break;
+            }
+        }
+
+        if (r == 1)
+        {
+            if (TPROG == TAB_IDFS[i].TIDF)
+            {
+                printf("%s ----> Erreur:  Le ID du programme ne peut etre utilise dans le programme.", SYM_COUR.NOM);
+                exit(EXIT_FAILURE);
+            }
+            else
+            {
+                printf("%s ----> Erreur: PAS DE DOUBLE DECLARATIONS.", SYM_COUR.NOM);
+                exit(EXIT_FAILURE);
+            }
+        }
+        else
+        {
+            strcpy(TAB_IDFS[NBR_IDFS].NOM, SYM_COUR.NOM);
+            TAB_IDFS[NBR_IDFS].TIDF = TCONST;
+            NBR_IDFS++;
+        }
+
         break;
 
-    case RCONST:
     case RVAR:
         for (i = 0; i < NBR_IDFS; ++i)
         {
@@ -175,21 +249,29 @@ void Check()
         {
             if (TPROG == TAB_IDFS[i].TIDF)
             {
+
                 printf("%s ----> Erreur:  Le ID du programme ne peut etre utilise dans le programme.\n", SYM_COUR.NOM);
+
                 exit(EXIT_FAILURE);
             }
             else
             {
+
                 printf("%s ----> Erreur: PAS DE DOUBLE DECLARATIONS.\n", SYM_COUR.NOM);
+
                 exit(EXIT_FAILURE);
             }
         }
         else
         {
-            strcpy(TAB_IDFS[NBR_IDFS].NOM, SYM_COUR.NOM);
-            TAB_IDFS[NBR_IDFS].TIDF = (current_reg == RCONST) ? TCONST : TVAR;
-            NBR_IDFS++;
-        }
+        strcpy(TAB_IDFS[NBR_IDFS].NOM, SYM_COUR.NOM);
+
+        //TAB_IDFS[NBR_IDFS].TIDF = (current_reg == RCONST) ? TCONST : TVAR;
+
+        TAB_IDFS[NBR_IDFS].TIDF = TVAR;
+                NBR_IDFS++;
+            }
+
         break;
 
     case RBEGIN:
@@ -207,11 +289,13 @@ void Check()
             if (TPROG == TAB_IDFS[i].TIDF)
             {
                 printf("%s ----> Erreur:  Le ID du programme ne peut etre utilise dans le programme.\n", SYM_COUR.NOM);
+
                 exit(EXIT_FAILURE);
             }
         }
         else
         {
+
             printf("%s ----> Erreur:  Tous les symboles doivent etre deja declares.\n", SYM_COUR.NOM);
             exit(EXIT_FAILURE);
         }
@@ -220,7 +304,9 @@ void Check()
             isReadActivated = 0;
             if (TCONST == TAB_IDFS[i].TIDF)
             {
+
                 printf("%s ----> Erreur:  Une constante ne peut changer de valeur dans le programme.\n", SYM_COUR.NOM);
+
                 exit(EXIT_FAILURE);
             }
         }
@@ -229,20 +315,23 @@ void Check()
     default:
         break;
     }
+
+}
+
+
+void checkifConst(){
+
+    for (int i = 0; i < NBR_IDFS; ++i)
+        {
+            if ((strcmp(SYM_COUR.NOM, TAB_IDFS[i].NOM) == 0)&&(TAB_IDFS[i].TIDF == TCONST))
+            {
+                printf("%s ----> Erreur:  Une constante ne peut changer de valeur dans le programme.", SYM_COUR.NOM);
+                exit(EXIT_FAILURE);
+            }
+        }
 }
 
 //FIN
-
-
-
-
-
-
-
-
-
-
-
 
 
 void lire_mot(){
@@ -361,6 +450,7 @@ void lire_nombre(){
     strcpy(SYM_COUR.NOM, nombre);
 }
 */
+
 void lire_nombre()
 {
     char nombre[20];
@@ -370,12 +460,15 @@ void lire_nombre()
     // Handle negative sign
     if (Car_Cour == '-')
     {
+
         nombre[indice++] = Car_Cour;
         Lire_Car();
     }
 
+
     if (!isdigit(Car_Cour))
     {
+
         Erreur(NUM_ERR);
     }
 
@@ -383,28 +476,34 @@ void lire_nombre()
     Lire_Car();
 
     // Read the rest of the number
+
     while (isdigit(Car_Cour) || (Car_Cour == '.' && !hasDecimalPoint))
     {
         if (Car_Cour == '.')
         {
             hasDecimalPoint = 1;
         }
+
         nombre[indice++] = Car_Cour;
         Lire_Car();
     }
     nombre[indice] = '\0';
 
     // Check if the literal contains a period to determine if it's a float or int
+
     if (hasDecimalPoint)
     {
         SYM_COUR.CODE = REAL_TOKEN;
     }
     else
     {
+
+
         SYM_COUR.CODE = INT_TOKEN;
     }
 
     strcpy(SYM_COUR.NOM, nombre);
+
     SYM_COUR.value = atoi(SYM_COUR.NOM); // ADDED BY
 }
 
@@ -440,6 +539,7 @@ void Skip_Comments()
         }
         else
         {
+
             Car_Cour = '/';
         }
     }
@@ -585,12 +685,15 @@ void Sym_Suiv(){
         }
         strcpy(SYM_COUR.NOM,s);
     }
+
     printf("Symbol: %s\n", SYM_COUR.NOM);
+
 }
 
 void Lire_Car(){
     Car_Cour = fgetc(fichier);
 }
+
 
 void Erreur(CODES_ERR code)
 {
@@ -611,6 +714,7 @@ void Erreur(CODES_ERR code)
         printf("Unknown error\n");
         break;
     }
+
     printf("Current Token: %d\n", SYM_COUR.CODE);
     printf("Current Lexeme: %s\n", SYM_COUR.NOM);
     exit(EXIT_FAILURE);
@@ -634,24 +738,23 @@ void PROGRAM(){
     Test_Symbole(PT_TOKEN, PT_ERR);
 }
 
-void BLOCK()
-{
+
+void BLOCK() {
     // Constants declarations
-    if (SYM_COUR.CODE == CONST_TOKEN)
-    {
+    if (SYM_COUR.CODE == CONST_TOKEN) {
         current_reg = RCONST;
-        CONSTS(); // Assuming this handles constant declarations
+        CONSTS();
     }
 
     // Variables declarations
-    if (SYM_COUR.CODE == VAR_TOKEN)
-    {
+    if (SYM_COUR.CODE == VAR_TOKEN) {
         current_reg = RVAR;
-        VARS(); // Assuming this handles variable declarations
+        VARS();
     }
 
     current_reg = RBEGIN;
     // Handle multiple procedure/function declarations
+
     while (SYM_COUR.CODE == PROCEDURE_TOKEN || SYM_COUR.CODE == FUNCTION_TOKEN)
     {
         if (SYM_COUR.CODE == PROCEDURE_TOKEN)
@@ -665,6 +768,7 @@ void BLOCK()
     }
 
     INSTS(); // Assuming this handles the instructions in the block
+
 }
 /*
 void CONSTS() {
@@ -775,7 +879,7 @@ void VARS()
             NBR_IDFS++;
 
             // Debug: Print symbol table
-            PrintSymbolTable();
+            //PrintSymbolTable();
 
             // Handle variable declaration
             Test_Symbole(ID_TOKEN, ID_ERR);
@@ -787,11 +891,13 @@ void VARS()
             Test_Symbole(DDOT_TOKEN, DDOT_ERR);
             switch (SYM_COUR.CODE)
             {
+
             case INT_TOKEN:
             case BOOL_TOKEN:
             case REAL_TOKEN:
             case CHAR_TOKEN:
             case STRING_TOKEN:
+
                 Sym_Suiv();
                 break;
             default:
@@ -800,6 +906,7 @@ void VARS()
             }
             Test_Symbole(PV_TOKEN, PV_ERR);
         } while (SYM_COUR.CODE == ID_TOKEN);
+
         break;
     case BEGIN_TOKEN:
         break;
@@ -864,6 +971,9 @@ void INST(){
 }
 
 void AFFEC(){
+
+    checkifConst();
+
     Test_Symbole(ID_TOKEN, ID_ERR);
     Test_Symbole(AFF_TOKEN, AFF_ERR);
     EXPR();
@@ -931,10 +1041,12 @@ void TERM(){
     }
 }
 
+
 void FACT()
 {
     switch (SYM_COUR.CODE)
     {
+
     case ID_TOKEN:
         Test_Symbole(ID_TOKEN, ID_ERR);
         break;
@@ -943,8 +1055,10 @@ void FACT()
     case REAL_TOKEN:
         Sym_Suiv();
         break;
+
     case MOINS_TOKEN: // Handle negative numbers
         Sym_Suiv();   // Consume the MOINS_TOKEN
+
         FACT();
         break;
     case PO_TOKEN:
@@ -957,6 +1071,7 @@ void FACT()
         break;
     }
 }
+
 void RELOP(){
     switch (SYM_COUR.CODE){
     case EG_TOKEN:
@@ -1011,6 +1126,7 @@ void MULOP(){
     }
 }
 
+
 void POUR()
 {
     Test_Symbole(FOR_TOKEN, FOR_ERR);
@@ -1018,6 +1134,7 @@ void POUR()
 
     switch (SYM_COUR.CODE)
     {
+
     case DOWNTO_TOKEN:
         Test_Symbole(DOWNTO_TOKEN, DOWNTO_ERR);
         break;
@@ -1032,6 +1149,7 @@ void POUR()
     Test_Symbole(INT_TOKEN, INT_ERR);
     Test_Symbole(DO_TOKEN, DO_ERR);
     INST();
+
 }
 
 void REPETER()
@@ -1045,6 +1163,7 @@ void REPETER()
         if (SYM_COUR.CODE == PV_TOKEN)
         {
             Sym_Suiv(); // Skip semicolon
+
         }
     } while (SYM_COUR.CODE != UNTIL_TOKEN && SYM_COUR.CODE != EOF_TOKEN);
 
@@ -1052,22 +1171,28 @@ void REPETER()
     COND();
 }
 
+
 void CAS()
 {
+
     Test_Symbole(CASE_TOKEN, CASE_ERR);
     Test_Symbole(ID_TOKEN, ID_ERR);
     Test_Symbole(OF_TOKEN, OF_TOKEN);
     Test_Symbole(NUM_TOKEN, NUM_ERR);
     Test_Symbole(DDOT_TOKEN, DDOT_ERR);
     INST();
+
     while (SYM_COUR.CODE == NUM_TOKEN)
     {
+
         Sym_Suiv();
         Test_Symbole(DDOT_TOKEN, DDOT_ERR);
         INST();
     }
+
     if (SYM_COUR.CODE == ELSE_TOKEN)
     {
+
         Sym_Suiv();
         INST();
     }
@@ -1135,6 +1260,7 @@ void PROCEDURE() {
     Test_Symbole(PV_TOKEN, PV_ERR);
 }
 
+
 void PROC_DECL()
 {
     Test_Symbole(PROCEDURE_TOKEN, PROCEDURE_ERR);
@@ -1154,6 +1280,7 @@ void PROC_DECL()
     Test_Symbole(PV_TOKEN, PV_ERR);
 
     // Handle procedure's local declarations and body
+
     BLOCK();
 
     Test_Symbole(PV_TOKEN, PV_ERR);
@@ -1174,6 +1301,7 @@ void PrintSymbolTable()
     printf("+----------------------+------------+\n");
     printf("Total entries: %d\n", NBR_IDFS);
 }
+
 
 void PARAM_LIST() {
     Test_Symbole(PO_TOKEN, PO_ERR);
@@ -1274,6 +1402,7 @@ int main()
     fichier = fopen("testfile.txt", "r");
     if (fichier == NULL)
     {
+
         perror("Erreur lors de l'ouverture du fichier");
         return 1;
     }
@@ -1291,12 +1420,15 @@ int main()
     }
     else
     {
+
         printf("PAS BRAVO: fin de programme erronée!!!!\n");
         printf("Current Token: %d\n", SYM_COUR.CODE);
         printf("Current Lexeme: %s\n", SYM_COUR.NOM);
         Sym_Suiv();
     }
 
+
     fclose(fichier);
     return 0;
 }
+
