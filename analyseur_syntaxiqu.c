@@ -26,7 +26,7 @@ typedef enum {
     INT_TOKEN, BOOL_TOKEN, REAL_TOKEN,
     CHAR_TOKEN, STRING_TOKEN, PROCEDURE_TOKEN , FUNCTION_TOKEN,
     PARAM_TOKEN,  // For parameter list
-    VAR_PARAM_TOKEN
+    VAR_PARAM_TOKEN,ERR_TOKEN
 } CODES_LEX;
 
 
@@ -80,6 +80,45 @@ typedef enum
 Region current_reg = RPROG;
 
 //FIN SEMANTIQUE
+
+char* getTokenString(CODES_LEX token) {
+    static const char* tokenStrings[] = {
+    "ID_TOKEN", "PROGRAM_TOKEN", "CONST_TOKEN", "VAR_TOKEN",
+    "BEGIN_TOKEN", "END_TOKEN", "IF_TOKEN", "THEN_TOKEN",
+    "WHILE_TOKEN", "DO_TOKEN", "READ_TOKEN", "WRITE_TOKEN",
+    "PV_TOKEN", "PT_TOKEN", "PLUS_TOKEN", "MOINS_TOKEN",
+    "MULT_TOKEN", "DIV_TOKEN", "VIR_TOKEN", "AFF_TOKEN",
+    "INF_TOKEN", "INFEG_TOKEN", "SUP_TOKEN", "SUPEG_TOKEN",
+    "DIFF_TOKEN", "PO_TOKEN", "PF_TOKEN", "EOF_TOKEN",
+    "NUM_TOKEN", "ERREUR_TOKEN", "FIN_TOKEN", "EG_TOKEN",
+    "REPEAT_TOKEN", "UNTIL_TOKEN", "FOR_TOKEN", "ELSE_TOKEN",
+    "CASE_TOKEN", "OF_TOKEN", "INTO_TOKEN", "DOWNTO_TOKEN",
+    "DDOT_TOKEN",
+    "INT_TOKEN", "BOOL_TOKEN", "REAL_TOKEN",
+    "CHAR_TOKEN", "STRING_TOKEN", "PROCEDURE_TOKEN", "FUNCTION_TOKEN",
+    "PARAM_TOKEN",
+    "VAR_PARAM_TOKEN",
+    "ERR_TOKEN"
+};
+
+
+    if (token >= 0 && token <= ERR_TOKEN) {
+        return tokenStrings[token];
+    }
+    return "UNKNOWN_TOKEN";
+}
+
+const char* getTypeIDFString(TypeIDF type) {
+    static const char* typeStrings[] = {
+        "TPROG", "TVAR", "TCONST", "TPROC", "TFUNC"
+    };
+
+    if (type >= TPROG && type <= TFUNC) {
+        return typeStrings[type];
+    } else {
+        return "UNKNOWN_TYPE";
+    }
+}
 
 
 TSym_Cour SYM_COUR;
@@ -259,6 +298,18 @@ void Check()
 
 }
 
+
+void checkifConst(){
+
+    for (int i = 0; i < NBR_IDFS; ++i)
+        {
+            if ((strcmp(SYM_COUR.NOM, TAB_IDFS[i].NOM) == 0)&&(TAB_IDFS[i].TIDF == TCONST))
+            {
+                printf("%s ----> Erreur:  Une constante ne peut changer de valeur dans le programme.", SYM_COUR.NOM);
+                exit(EXIT_FAILURE);
+            }
+        }
+}
 //FIN
 
 
@@ -582,7 +633,7 @@ void Sym_Suiv(){
         }
         strcpy(SYM_COUR.NOM,s);
     }
-    printf("Symbol: %s\n", SYM_COUR.NOM);
+    printf("Symbol: %s  \t de Token %s\n", SYM_COUR.NOM,getTokenString(SYM_COUR.CODE));
 }
 
 void Lire_Car(){
@@ -836,6 +887,7 @@ void INST(){
 }
 
 void AFFEC(){
+    checkifConst();
     Test_Symbole(ID_TOKEN, ID_ERR);
     Test_Symbole(AFF_TOKEN, AFF_ERR);
     EXPR();
@@ -1234,6 +1286,9 @@ int main(){
         printf("Current Token: %d\n", SYM_COUR.CODE);
         printf("Current Lexeme: %s\n", SYM_COUR.NOM);
         Sym_Suiv();
+    }
+    for(int l=0;l<NBR_IDFS;l++){
+        printf("L'id de nom %s \tet de type %s\n",TAB_IDFS[l].NOM,getTypeIDFString(TAB_IDFS[l].TIDF));
     }
 
     fclose(fichier);
