@@ -1,0 +1,60 @@
+program TestProgram;
+
+const
+    PI = 3.14;
+    MAX_VALUE = 100;
+
+var
+    x, y, z: integer;
+    flag: boolean;
+    result: real;
+
+procedure DisplayMessage(message: string);  // Renamed from PrintMessage to DisplayMessage
+begin
+    write(message);
+end;
+
+function AddNumbers(a, b: integer): integer;
+begin
+    AddNumbers := a + b;
+end;
+
+begin
+    x := 10;
+    y := 20;
+    z := x + y;
+
+    if z > MAX_VALUE then
+    begin
+        write('z is greater than MAX_VALUE');
+    end
+    else
+    begin
+        write('z is less than or equal to MAX_VALUE');
+    end;
+
+    while x < 50 do
+    begin
+        x := x + 1;
+    end;
+
+    for y := 1 to 10 do
+    begin
+        z := z + y;
+    end;
+
+    repeat
+        z := z - 1;
+    until z < 0;
+
+    flag := true;
+
+    if flag then
+    begin
+        DisplayMessage('Flag is true');  // Updated call to DisplayMessage
+    end;
+
+    result := AddNumbers(x, y) * PI;
+
+    write('Final result: ', result);
+end.
